@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # MySQL数据库服务
+  mysql:
+    image: mysql:8.0
+    container_name: mall_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: online_mall
+      MYSQL_USER: mall_user
+      MYSQL_PASSWORD: mall_pass
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./database/seed_data.sql:/docker-entrypoint-initdb.d/02-seed_data.sql
+    networks:
+      - mall_network
+    command: --default-authentication-plugin=mysql_native_password
+
+  # FastAPI后端服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mall_backend
+    restart: always
+    environment:
+      DATABASE_URL: mysql+pymysql://root:123456@mysql:3306/online_mall
+      JWT_SECRET_KEY: your-super-secret-key-change-in-production
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
+    volumes:
+      - ./backend:/app
+    networks:
+      - mall_network
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Nginx前端服务
+  frontend:
+    image: nginx:alpine
+    container_name: mall_frontend
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+    networks:
+      - mall_network
+
+networks:
+  mall_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
