@@ -79,3 +79,5 @@ htmlcov/
 *.bak
 *.tmp
 .qoder/
+#word
+word/

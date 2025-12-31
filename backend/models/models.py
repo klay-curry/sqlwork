@@ -2,7 +2,7 @@
 数据库ORM模型定义
 SQLAlchemy模型类
 """
-from sqlalchemy import Column, BigInteger, String, Integer, DECIMAL, DateTime, Text, TINYINT, ForeignKey, Index
+from sqlalchemy import Column, BigInteger, String, Integer, DECIMAL, DateTime, Text, ForeignKey, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -50,7 +50,7 @@ class Product(Base):
     price = Column(DECIMAL(10, 2), nullable=False, comment='商品价格')
     stock = Column(Integer, default=0, comment='库存数量')
     category = Column(String(50), comment='商品类目')
-    status = Column(TINYINT, default=1, comment='1=上架, 2=下架')
+    status = Column(Integer, default=1, comment='1=上架, 2=下架')
     created_at = Column(DateTime, server_default=func.now(), comment='创建时间')
     
     # 关系

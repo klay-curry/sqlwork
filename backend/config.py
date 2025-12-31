@@ -10,10 +10,11 @@ class Settings(BaseSettings):
     """应用配置类"""
     
     # 数据库配置
-    DATABASE_URL: str = "mysql+pymysql://root:123456@localhost:3306/online_mall"
+    # 请修改密码为你的 MySQL root 密码
+    DATABASE_URL: str = "mysql+pymysql://root:151362@localhost:3306/online_mall"
     
     # JWT配置
-    JWT_SECRET_KEY: str = "your-super-secret-key-please-change-in-production"
+    JWT_SECRET_KEY: str = "JWT_SECRET_KEY=K9mP2xL7vN4qR8wE6tY3uI1oA5sD0fG9hJ2kZ8xC7vB6nM4lQ3wE"
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24小时
     

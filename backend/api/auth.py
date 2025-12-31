@@ -102,54 +102,67 @@ def login(login_data: UserLogin, db: Session = Depends(get_db)):
     - **password**: 密码
     - **role**: 角色类型（user=买家, merchant=商家）
     """
-    if login_data.role == "user":
-        # 用户登录
-        user = authenticate_user(db, login_data.username, login_data.password)
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="用户名或密码错误",
-                headers={"WWW-Authenticate": "Bearer"},
+    try:
+        if login_data.role == "user":
+            # 用户登录
+            user = authenticate_user(db, login_data.username, login_data.password)
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="用户名或密码错误",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            
+            # 生成JWT Token
+            access_token_expires = timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
+            access_token = create_access_token(
+                data={"user_id": user.user_id, "role": "user"},
+                expires_delta=access_token_expires
             )
+            
+            return {
+                "access_token": access_token,
+                "token_type": "Bearer",
+                "expires_in": settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60
+            }
         
-        # 生成JWT Token
-        access_token_expires = timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(
-            data={"user_id": user.user_id, "role": "user"},
-            expires_delta=access_token_expires
-        )
-        
-        return {
-            "access_token": access_token,
-            "token_type": "Bearer",
-            "expires_in": settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60
-        }
-    
-    elif login_data.role == "merchant":
-        # 商家登录
-        merchant = authenticate_merchant(db, login_data.username, login_data.password)
-        if not merchant:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="商家名称或密码错误",
-                headers={"WWW-Authenticate": "Bearer"},
+        elif login_data.role == "merchant":
+            # 商家登录
+            merchant = authenticate_merchant(db, login_data.username, login_data.password)
+            if not merchant:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="商家名称或密码错误",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            
+            # 生成JWT Token
+            access_token_expires = timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
+            access_token = create_access_token(
+                data={"merchant_id": merchant.merchant_id, "role": "merchant"},
+                expires_delta=access_token_expires
             )
+            
+            return {
+                "access_token": access_token,
+                "token_type": "Bearer",
+                "expires_in": settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60
+            }
         
-        # 生成JWT Token
-        access_token_expires = timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(
-            data={"merchant_id": merchant.merchant_id, "role": "merchant"},
-            expires_delta=access_token_expires
-        )
-        
-        return {
-            "access_token": access_token,
-            "token_type": "Bearer",
-            "expires_in": settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60
-        }
-    
-    else:
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="无效的角色类型，必须是 user 或 merchant"
+            )
+    except HTTPException:
+        # 重新抛出HTTPException
+        raise
+    except Exception as e:
+        # 捕获其他所有异常并记录
+        print(f"Login error: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="无效的角色类型，必须是 user 或 merchant"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"登录失败: {str(e)}"
         )
